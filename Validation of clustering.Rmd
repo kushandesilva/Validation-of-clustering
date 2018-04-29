@@ -1,0 +1,87 @@
+---
+title: "R Notebook"
+output:
+  html_notebook: default
+  html_document:
+    df_print: paged
+  word_document: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+head(iris, 3)
+# Iris data set
+df <- iris[, -5]
+# Random data generated from the iris data set
+random_df <- apply(df, 2,
+function(x){runif(length(x), min(x), (max(x)))})
+random_df <- as.data.frame(random_df)
+# Standardize the data sets
+df <- iris.scaled <- scale(df)
+random_df <- scale(random_df)
+
+library("factoextra")
+# Plot faithful data set
+fviz_pca_ind(prcomp(df), title = "PCA - Iris data",
+habillage = iris$Species, palette = "jco",
+geom = "point", ggtheme = theme_classic(),
+legend = "bottom")
+# Plot the random df
+fviz_pca_ind(prcomp(random_df), title = "PCA - Random data",
+geom = "point", ggtheme = theme_classic())
+
+```
+
+The original iris data contains 3 clusters but the clustering is absent in random dataset
+
+```{r}
+library(factoextra)
+set.seed(123)
+# K-means on iris dataset
+km.res1 <- kmeans(df, 3)
+fviz_cluster(list(data = df, cluster = km.res1$cluster),
+ellipse.type = "norm", geom = "point", stand = FALSE,
+palette = "jco", ggtheme = theme_classic())
+
+# K-means on the random dataset
+km.res2 <- kmeans(random_df, 3)
+fviz_cluster(list(data = random_df, cluster = km.res2$cluster),
+ellipse.type = "norm", geom = "point", stand = FALSE,
+palette = "jco", ggtheme = theme_classic())
+# Hierarchical clustering on the random dataset
+fviz_dend(hclust(dist(random_df)), k = 3, k_colors = "jco",
+as.ggplot = TRUE, show_labels = FALSE)
+
+
+```
+
+k.means clustering and hierarchical clustering algorithms above have created clusters for random data as well. This explains why a validation process is required
+
+```{r}
+library(clustertend)
+# Compute Hopkins statistic for iris dataset
+set.seed(123)
+hopkins(df, n = nrow(df)-1)
+
+# Compute Hopkins statistic for a random dataset
+set.seed(123)
+hopkins(random_df, n = nrow(random_df)-1)
+```
+
+H-value <0.5 indicates high clusterability
+
+```{r}
+fviz_dist(dist(df), show_labels = FALSE)+
+labs(title = "Iris data")
+fviz_dist(dist(random_df), show_labels = FALSE)+
+labs(title = "Random data")
+```
+
+Visual Assessment of clustering Tendency (VAT)
+
+Redcolor indicates high similarity (low dissimilarity) while Blue indicates low similarity (high dissimilarity)
+
+The dissimilarity matrices confirm the clustering in the original iris data set but not in the random dataset
